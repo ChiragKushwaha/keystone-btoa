@@ -4,7 +4,7 @@ import React from "react";
 import { CURRENT_USER_QUERY } from "./User";
 
 const ADD_TO_CART_MUTATION = gql`
-  mutation ADD_TO_CART_MUTATION {
+  mutation ADD_TO_CART_MUTATION($id: ID) {
     addToCart(productId: $id) {
       id
     }
@@ -17,7 +17,7 @@ const AddToCart = ({ id }: any) => {
     refetchQueries: [{ query: CURRENT_USER_QUERY }],
   });
   return (
-    <button disabled={loading} onClick={addToCart as any} type="button">
+    <button disabled={loading} onClick={addToCart.bind(this, id)} type="button">
       Add{loading && "ing"} to Cart 🛒
     </button>
   );

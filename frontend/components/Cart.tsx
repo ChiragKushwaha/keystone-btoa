@@ -1,9 +1,10 @@
-import { timeStamp } from "console";
 import React from "react";
 import styled from "styled-components";
 import calcTotalPrice from "../lib/calcTotalPrice";
 import { useCart } from "../lib/cartState";
 import formatMoney from "../lib/formatMoney";
+import { Checkout } from "./Checkout";
+import RemoveFromCart from "./RemoveFromCart";
 import CartStyles from "./styles/CartStyles";
 import CloseButton from "./styles/CloseButton";
 import Supreme from "./styles/Supreme";
@@ -31,7 +32,7 @@ const CartItem = ({ cartItem }: any) => {
     <CartItemStyles>
       <img
         width={"100"}
-        src={product.photo.image.publicUrlTransformed}
+        src={product.photo?.image.publicUrlTransformed}
         alt={product.name}
       />
       <div>
@@ -43,6 +44,7 @@ const CartItem = ({ cartItem }: any) => {
           </em>
         </p>
       </div>
+      <RemoveFromCart id={cartItem.id} />
     </CartItemStyles>
   );
 };
@@ -66,6 +68,7 @@ const Cart = () => {
       </ul>
       <footer>
         <p>{formatMoney(calcTotalPrice(me.cart))}</p>
+        <Checkout />
       </footer>
     </CartStyles>
   );

@@ -30,8 +30,6 @@ const RequestReset = () => {
     e.preventDefault(); // stop the form from submitting
     // Send the email and password to the graphqlAPI
     await signup().catch(console.error);
-    console.log(data);
-
     clearForm();
   }
 
