@@ -6,6 +6,7 @@ import { lists } from "./schema";
 import { withAuth, session } from "./auth";
 import { KeystoneContext } from "@keystone-next/keystone/types";
 import { extendGraphqlSchema } from "./mutations";
+import { statelessSessions } from "@keystone-next/keystone/session";
 
 export default withAuth(
   config({

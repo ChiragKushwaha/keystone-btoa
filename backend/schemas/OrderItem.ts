@@ -7,13 +7,13 @@ import {
 } from "@keystone-next/keystone/fields";
 import { inSignedIn, rules } from "../access";
 
-export const Product = list({
+export const OrderItem = list({
   access: {
     operation: {
       create: inSignedIn,
-      query: rules.canReadProducts,
-      update: rules.canManageProducts,
-      delete: rules.canManageProducts,
+      query: rules.canManageOrderItems,
+      update: () => false,
+      delete: () => false,
     },
   },
   fields: {
@@ -23,7 +23,7 @@ export const Product = list({
       },
     }),
     photo: relationship({
-      ref: "ProductImage.product",
+      ref: "ProductImage",
       ui: {
         displayMode: "cards",
         cardFields: ["image", "altText"],
@@ -37,20 +37,8 @@ export const Product = list({
         displayMode: "textarea",
       },
     }),
-    status: select({
-      options: [
-        { label: "Draft", value: "DRAFT" },
-        { label: "Available", value: "AVAILABLE" },
-        { label: "Unavailable", value: "UNAVAILABLE" },
-      ],
-      defaultValue: "DRAFT",
-      ui: {
-        displayMode: "segmented-control",
-      },
-    }),
     price: integer(),
-    user: relationship({
-      ref: "User.products",
-    }),
+    quantity: integer(),
+    order: relationship({ ref: "Order.items" }),
   },
 });

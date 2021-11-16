@@ -3,19 +3,7 @@
 
 type Mutation {
   addToCart(productId: ID): CartItem
-  sendUserPasswordResetLink(email: String!): Boolean!
-  redeemUserPasswordResetToken(
-    email: String!
-    token: String!
-    password: String!
-  ): RedeemUserPasswordResetTokenResult
-  createInitialUser(
-    data: CreateInitialUserInput!
-  ): UserAuthenticationWithPasswordSuccess!
-  authenticateUserWithPassword(
-    email: String!
-    password: String!
-  ): UserAuthenticationWithPasswordResult!
+  checkout(token: String!): Order
   createUser(data: UserCreateInput!): User
   createUsers(data: [UserCreateInput!]!): [User]
   updateUser(where: UserWhereUniqueInput!, data: UserUpdateInput!): User
@@ -61,44 +49,41 @@ type Mutation {
   updateCartItems(data: [CartItemUpdateArgs!]!): [CartItem]
   deleteCartItem(where: CartItemWhereUniqueInput!): CartItem
   deleteCartItems(where: [CartItemWhereUniqueInput!]!): [CartItem]
+  createOrder(data: OrderCreateInput!): Order
+  createOrders(data: [OrderCreateInput!]!): [Order]
+  updateOrder(where: OrderWhereUniqueInput!, data: OrderUpdateInput!): Order
+  updateOrders(data: [OrderUpdateArgs!]!): [Order]
+  deleteOrder(where: OrderWhereUniqueInput!): Order
+  deleteOrders(where: [OrderWhereUniqueInput!]!): [Order]
+  createOrderItem(data: OrderItemCreateInput!): OrderItem
+  createOrderItems(data: [OrderItemCreateInput!]!): [OrderItem]
+  updateOrderItem(
+    where: OrderItemWhereUniqueInput!
+    data: OrderItemUpdateInput!
+  ): OrderItem
+  updateOrderItems(data: [OrderItemUpdateArgs!]!): [OrderItem]
+  deleteOrderItem(where: OrderItemWhereUniqueInput!): OrderItem
+  deleteOrderItems(where: [OrderItemWhereUniqueInput!]!): [OrderItem]
+  createRole(data: RoleCreateInput!): Role
+  createRoles(data: [RoleCreateInput!]!): [Role]
+  updateRole(where: RoleWhereUniqueInput!, data: RoleUpdateInput!): Role
+  updateRoles(data: [RoleUpdateArgs!]!): [Role]
+  deleteRole(where: RoleWhereUniqueInput!): Role
+  deleteRoles(where: [RoleWhereUniqueInput!]!): [Role]
   endSession: Boolean!
-}
-
-type ValidateUserPasswordResetTokenResult {
-  code: PasswordResetRedemptionErrorCode!
-  message: String!
-}
-
-type RedeemUserPasswordResetTokenResult {
-  code: PasswordResetRedemptionErrorCode!
-  message: String!
-}
-
-enum PasswordResetRedemptionErrorCode {
-  FAILURE
-  TOKEN_EXPIRED
-  TOKEN_REDEEMED
-}
-
-input CreateInitialUserInput {
-  name: String
-  email: String
-  password: String
-}
-
-union AuthenticatedItem = User
-
-union UserAuthenticationWithPasswordResult =
-    UserAuthenticationWithPasswordSuccess
-  | UserAuthenticationWithPasswordFailure
-
-type UserAuthenticationWithPasswordSuccess {
-  sessionToken: String!
-  item: User!
-}
-
-type UserAuthenticationWithPasswordFailure {
-  message: String!
+  authenticateUserWithPassword(
+    email: String!
+    password: String!
+  ): UserAuthenticationWithPasswordResult
+  createInitialUser(
+    data: CreateInitialUserInput!
+  ): UserAuthenticationWithPasswordSuccess!
+  sendUserPasswordResetLink(email: String!): Boolean!
+  redeemUserPasswordResetToken(
+    email: String!
+    token: String!
+    password: String!
+  ): RedeemUserPasswordResetTokenResult
 }
 
 type User {
@@ -120,6 +105,21 @@ type User {
     skip: Int! = 0
   ): [CartItem!]
   cartCount(where: CartItemWhereInput! = {}): Int
+  orders(
+    where: OrderWhereInput! = {}
+    orderBy: [OrderOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Order!]
+  ordersCount(where: OrderWhereInput! = {}): Int
+  role: Role
+  products(
+    where: ProductWhereInput! = {}
+    orderBy: [ProductOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Product!]
+  productsCount(where: ProductWhereInput! = {}): Int
   passwordResetToken: PasswordState
   passwordResetIssuedAt: DateTime
   passwordResetRedeemedAt: DateTime
@@ -146,6 +146,9 @@ input UserWhereInput {
   email: StringFilter
   posts: PostManyRelationFilter
   cart: CartItemManyRelationFilter
+  orders: OrderManyRelationFilter
+  role: RoleWhereInput
+  products: ProductManyRelationFilter
   passwordResetToken: PasswordFilter
   passwordResetIssuedAt: DateTimeNullableFilter
   passwordResetRedeemedAt: DateTimeNullableFilter
@@ -202,6 +205,18 @@ input CartItemManyRelationFilter {
   none: CartItemWhereInput
 }
 
+input OrderManyRelationFilter {
+  every: OrderWhereInput
+  some: OrderWhereInput
+  none: OrderWhereInput
+}
+
+input ProductManyRelationFilter {
+  every: ProductWhereInput
+  some: ProductWhereInput
+  none: ProductWhereInput
+}
+
 input PasswordFilter {
   isSet: Boolean!
 }
@@ -236,6 +251,9 @@ input UserUpdateInput {
   password: String
   posts: PostRelateToManyForUpdateInput
   cart: CartItemRelateToManyForUpdateInput
+  orders: OrderRelateToManyForUpdateInput
+  role: RoleRelateToOneForUpdateInput
+  products: ProductRelateToManyForUpdateInput
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
   passwordResetRedeemedAt: DateTime
@@ -255,6 +273,26 @@ input CartItemRelateToManyForUpdateInput {
   connect: [CartItemWhereUniqueInput!]
 }
 
+input OrderRelateToManyForUpdateInput {
+  disconnect: [OrderWhereUniqueInput!]
+  set: [OrderWhereUniqueInput!]
+  create: [OrderCreateInput!]
+  connect: [OrderWhereUniqueInput!]
+}
+
+input RoleRelateToOneForUpdateInput {
+  create: RoleCreateInput
+  connect: RoleWhereUniqueInput
+  disconnect: Boolean
+}
+
+input ProductRelateToManyForUpdateInput {
+  disconnect: [ProductWhereUniqueInput!]
+  set: [ProductWhereUniqueInput!]
+  create: [ProductCreateInput!]
+  connect: [ProductWhereUniqueInput!]
+}
+
 input UserUpdateArgs {
   where: UserWhereUniqueInput!
   data: UserUpdateInput!
@@ -266,6 +304,9 @@ input UserCreateInput {
   password: String
   posts: PostRelateToManyForCreateInput
   cart: CartItemRelateToManyForCreateInput
+  orders: OrderRelateToManyForCreateInput
+  role: RoleRelateToOneForCreateInput
+  products: ProductRelateToManyForCreateInput
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
   passwordResetRedeemedAt: DateTime
@@ -279,6 +320,21 @@ input PostRelateToManyForCreateInput {
 input CartItemRelateToManyForCreateInput {
   create: [CartItemCreateInput!]
   connect: [CartItemWhereUniqueInput!]
+}
+
+input OrderRelateToManyForCreateInput {
+  create: [OrderCreateInput!]
+  connect: [OrderWhereUniqueInput!]
+}
+
+input RoleRelateToOneForCreateInput {
+  create: RoleCreateInput
+  connect: RoleWhereUniqueInput
+}
+
+input ProductRelateToManyForCreateInput {
+  create: [ProductCreateInput!]
+  connect: [ProductWhereUniqueInput!]
 }
 
 type Tag {
@@ -456,6 +512,7 @@ type Product {
   description: String
   status: String
   price: Int
+  user: User
 }
 
 input ProductWhereUniqueInput {
@@ -472,6 +529,7 @@ input ProductWhereInput {
   description: StringFilter
   status: StringNullableFilter
   price: IntNullableFilter
+  user: UserWhereInput
 }
 
 input IntNullableFilter {
@@ -499,6 +557,7 @@ input ProductUpdateInput {
   description: String
   status: String
   price: Int
+  user: UserRelateToOneForUpdateInput
 }
 
 input ProductImageRelateToOneForUpdateInput {
@@ -518,6 +577,7 @@ input ProductCreateInput {
   description: String
   status: String
   price: Int
+  user: UserRelateToOneForCreateInput
 }
 
 input ProductImageRelateToOneForCreateInput {
@@ -686,6 +746,246 @@ input CartItemCreateInput {
   user: UserRelateToOneForCreateInput
 }
 
+type Order {
+  id: ID!
+  label: String
+  total: Int
+  items(
+    where: OrderItemWhereInput! = {}
+    orderBy: [OrderItemOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [OrderItem!]
+  itemsCount(where: OrderItemWhereInput! = {}): Int
+  user: User
+  charge: String
+}
+
+input OrderWhereUniqueInput {
+  id: ID
+}
+
+input OrderWhereInput {
+  AND: [OrderWhereInput!]
+  OR: [OrderWhereInput!]
+  NOT: [OrderWhereInput!]
+  id: IDFilter
+  total: IntNullableFilter
+  items: OrderItemManyRelationFilter
+  user: UserWhereInput
+  charge: StringFilter
+}
+
+input OrderItemManyRelationFilter {
+  every: OrderItemWhereInput
+  some: OrderItemWhereInput
+  none: OrderItemWhereInput
+}
+
+input OrderOrderByInput {
+  id: OrderDirection
+  total: OrderDirection
+  charge: OrderDirection
+}
+
+input OrderUpdateInput {
+  total: Int
+  items: OrderItemRelateToManyForUpdateInput
+  user: UserRelateToOneForUpdateInput
+  charge: String
+}
+
+input OrderItemRelateToManyForUpdateInput {
+  disconnect: [OrderItemWhereUniqueInput!]
+  set: [OrderItemWhereUniqueInput!]
+  create: [OrderItemCreateInput!]
+  connect: [OrderItemWhereUniqueInput!]
+}
+
+input OrderUpdateArgs {
+  where: OrderWhereUniqueInput!
+  data: OrderUpdateInput!
+}
+
+input OrderCreateInput {
+  total: Int
+  items: OrderItemRelateToManyForCreateInput
+  user: UserRelateToOneForCreateInput
+  charge: String
+}
+
+input OrderItemRelateToManyForCreateInput {
+  create: [OrderItemCreateInput!]
+  connect: [OrderItemWhereUniqueInput!]
+}
+
+type OrderItem {
+  id: ID!
+  name: String
+  photo: ProductImage
+  description: String
+  price: Int
+  quantity: Int
+  order: Order
+}
+
+input OrderItemWhereUniqueInput {
+  id: ID
+}
+
+input OrderItemWhereInput {
+  AND: [OrderItemWhereInput!]
+  OR: [OrderItemWhereInput!]
+  NOT: [OrderItemWhereInput!]
+  id: IDFilter
+  name: StringFilter
+  photo: ProductImageWhereInput
+  description: StringFilter
+  price: IntNullableFilter
+  quantity: IntNullableFilter
+  order: OrderWhereInput
+}
+
+input OrderItemOrderByInput {
+  id: OrderDirection
+  name: OrderDirection
+  description: OrderDirection
+  price: OrderDirection
+  quantity: OrderDirection
+}
+
+input OrderItemUpdateInput {
+  name: String
+  photo: ProductImageRelateToOneForUpdateInput
+  description: String
+  price: Int
+  quantity: Int
+  order: OrderRelateToOneForUpdateInput
+}
+
+input OrderRelateToOneForUpdateInput {
+  create: OrderCreateInput
+  connect: OrderWhereUniqueInput
+  disconnect: Boolean
+}
+
+input OrderItemUpdateArgs {
+  where: OrderItemWhereUniqueInput!
+  data: OrderItemUpdateInput!
+}
+
+input OrderItemCreateInput {
+  name: String
+  photo: ProductImageRelateToOneForCreateInput
+  description: String
+  price: Int
+  quantity: Int
+  order: OrderRelateToOneForCreateInput
+}
+
+input OrderRelateToOneForCreateInput {
+  create: OrderCreateInput
+  connect: OrderWhereUniqueInput
+}
+
+type Role {
+  id: ID!
+  name: String
+  canManageProducts: Boolean
+  canSeeOtherUsers: Boolean
+  canManageUsers: Boolean
+  canManageRoles: Boolean
+  canManageCart: Boolean
+  canManageOrders: Boolean
+  assignedTo(
+    where: UserWhereInput! = {}
+    orderBy: [UserOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [User!]
+  assignedToCount(where: UserWhereInput! = {}): Int
+}
+
+input RoleWhereUniqueInput {
+  id: ID
+}
+
+input RoleWhereInput {
+  AND: [RoleWhereInput!]
+  OR: [RoleWhereInput!]
+  NOT: [RoleWhereInput!]
+  id: IDFilter
+  name: StringFilter
+  canManageProducts: BooleanFilter
+  canSeeOtherUsers: BooleanFilter
+  canManageUsers: BooleanFilter
+  canManageRoles: BooleanFilter
+  canManageCart: BooleanFilter
+  canManageOrders: BooleanFilter
+  assignedTo: UserManyRelationFilter
+}
+
+input BooleanFilter {
+  equals: Boolean
+  not: BooleanFilter
+}
+
+input UserManyRelationFilter {
+  every: UserWhereInput
+  some: UserWhereInput
+  none: UserWhereInput
+}
+
+input RoleOrderByInput {
+  id: OrderDirection
+  name: OrderDirection
+  canManageProducts: OrderDirection
+  canSeeOtherUsers: OrderDirection
+  canManageUsers: OrderDirection
+  canManageRoles: OrderDirection
+  canManageCart: OrderDirection
+  canManageOrders: OrderDirection
+}
+
+input RoleUpdateInput {
+  name: String
+  canManageProducts: Boolean
+  canSeeOtherUsers: Boolean
+  canManageUsers: Boolean
+  canManageRoles: Boolean
+  canManageCart: Boolean
+  canManageOrders: Boolean
+  assignedTo: UserRelateToManyForUpdateInput
+}
+
+input UserRelateToManyForUpdateInput {
+  disconnect: [UserWhereUniqueInput!]
+  set: [UserWhereUniqueInput!]
+  create: [UserCreateInput!]
+  connect: [UserWhereUniqueInput!]
+}
+
+input RoleUpdateArgs {
+  where: RoleWhereUniqueInput!
+  data: RoleUpdateInput!
+}
+
+input RoleCreateInput {
+  name: String
+  canManageProducts: Boolean
+  canSeeOtherUsers: Boolean
+  canManageUsers: Boolean
+  canManageRoles: Boolean
+  canManageCart: Boolean
+  canManageOrders: Boolean
+  assignedTo: UserRelateToManyForCreateInput
+}
+
+input UserRelateToManyForCreateInput {
+  create: [UserCreateInput!]
+  connect: [UserWhereUniqueInput!]
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -694,12 +994,37 @@ scalar JSON
     url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf"
   )
 
+union UserAuthenticationWithPasswordResult =
+    UserAuthenticationWithPasswordSuccess
+  | UserAuthenticationWithPasswordFailure
+
+type UserAuthenticationWithPasswordSuccess {
+  sessionToken: String!
+  item: User!
+}
+
+type UserAuthenticationWithPasswordFailure {
+  message: String!
+}
+
+input CreateInitialUserInput {
+  name: String
+  email: String
+  password: String
+}
+
+type RedeemUserPasswordResetTokenResult {
+  code: PasswordResetRedemptionErrorCode!
+  message: String!
+}
+
+enum PasswordResetRedemptionErrorCode {
+  FAILURE
+  TOKEN_EXPIRED
+  TOKEN_REDEEMED
+}
+
 type Query {
-  validateUserPasswordResetToken(
-    email: String!
-    token: String!
-  ): ValidateUserPasswordResetTokenResult
-  authenticatedItem: AuthenticatedItem
   users(
     where: UserWhereInput! = {}
     orderBy: [UserOrderByInput!]! = []
@@ -748,7 +1073,43 @@ type Query {
   ): [CartItem!]
   cartItem(where: CartItemWhereUniqueInput!): CartItem
   cartItemsCount(where: CartItemWhereInput! = {}): Int
+  orders(
+    where: OrderWhereInput! = {}
+    orderBy: [OrderOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Order!]
+  order(where: OrderWhereUniqueInput!): Order
+  ordersCount(where: OrderWhereInput! = {}): Int
+  orderItems(
+    where: OrderItemWhereInput! = {}
+    orderBy: [OrderItemOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [OrderItem!]
+  orderItem(where: OrderItemWhereUniqueInput!): OrderItem
+  orderItemsCount(where: OrderItemWhereInput! = {}): Int
+  roles(
+    where: RoleWhereInput! = {}
+    orderBy: [RoleOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Role!]
+  role(where: RoleWhereUniqueInput!): Role
+  rolesCount(where: RoleWhereInput! = {}): Int
   keystone: KeystoneMeta!
+  authenticatedItem: AuthenticatedItem
+  validateUserPasswordResetToken(
+    email: String!
+    token: String!
+  ): ValidateUserPasswordResetTokenResult
+}
+
+union AuthenticatedItem = User
+
+type ValidateUserPasswordResetTokenResult {
+  code: PasswordResetRedemptionErrorCode!
+  message: String!
 }
 
 type KeystoneMeta {
